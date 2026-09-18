@@ -1,0 +1,48 @@
+{
+  "name": "flow-studio-manager",
+  "version": "1.0.0",
+  "description": "Google Flow Multi-Account Studio Manager for Creators",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": ["google-flow", "multi-account", "video-creator", "ai-video", "credits-tracker"],
+  "author": "Flow Studio Manager",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {},
+  "build": {
+    "appId": "com.flowstudiomanager.app",
+    "productName": "Flow Studio Manager",
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        },
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "flow-preload.js",
+      "src/**/*",
+      "assets/**/*"
+    ]
+  }
+}

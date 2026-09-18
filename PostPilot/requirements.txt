@@ -1,0 +1,5 @@
+# PostPilot v1 dependencies (Windows laptop)
+PySide6>=6.6
+websocket-client>=1.7   # sync CDP websocket client
+requests>=2.31           # Telegram Bot API polling + agent_send.py
+pyinstaller>=6.0         # build.bat only

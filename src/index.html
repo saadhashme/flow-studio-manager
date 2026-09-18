@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flow Studio Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="../assets/icon.ico">
+  <link rel="icon" type="image/png" href="../assets/icon.png">
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/sidebar.css">
+</head>
+<body class="dark-theme">
+
+  <!-- TOP CONTROL BAR -->
+  <header id="top-bar">
+    <div class="top-left-section">
+      <div id="active-account-pill" class="account-pill-card">
+        <div class="avatar-ring">
+          <div class="account-avatar" id="active-avatar">?</div>
+        </div>
+        <div class="account-meta">
+          <div class="account-name-row">
+            <span id="active-name" class="account-name">No Account Selected</span>
+            <span id="active-plan-badge" class="badge badge-pro">PRO</span>
+          </div>
+          <span id="active-email" class="account-email">Select an account to start</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER: LIVE CREDIT GAUGE -->
+    <div class="top-center-section">
+      <div class="credit-display-card">
+        <div class="credit-header">
+          <span class="credit-label">ACTIVE ACCOUNT CREDITS</span>
+          <span id="credit-clips-estimate" class="clips-estimate">~3 clips left (15 cr/clip)</span>
+        </div>
+        <div class="credit-meter-row">
+          <div class="credit-numbers">
+            <span id="active-credits-num" class="credit-val">50</span>
+            <span class="credit-max">/ 50</span>
+          </div>
+          <div class="credit-progress-track">
+            <div id="active-credit-progress" class="credit-progress-fill" style="width: 100%;"></div>
+          </div>
+          <button id="btn-refresh-credits" class="btn-icon" title="Scan / Refresh Credits">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOP RIGHT: NAVIGATION & QUICK ACTIONS -->
+    <div class="top-right-section">
+      <button id="btn-next-account" class="btn btn-switch-next" title="Switch to next ready account (Alt+N)">
+        <span class="btn-glow"></span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polygon points="5 4 15 12 5 20 5 4"></polygon>
+          <line x1="19" y1="5" x2="19" y2="19"></line>
+        </svg>
+        <div class="switch-text-group">
+          <span class="switch-primary-text">Next Account</span>
+          <span id="ready-accounts-tag" class="switch-sub-text">Alt+N</span>
+        </div>
+      </button>
+
+      <div class="browser-nav-group">
+        <button id="btn-nav-back" class="btn-icon" title="Go Back">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button id="btn-nav-forward" class="btn-icon" title="Go Forward">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+        <button id="btn-nav-reload" class="btn-icon" title="Reload Flow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
+        <button id="btn-nav-home" class="btn-icon" title="Flow Home">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </button>
+      </div>
+
+      <button id="btn-login-active" class="btn btn-secondary" title="Open Google Sign-in for this account">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+        <span>Sign In</span>
+      </button>
+
+      <button id="btn-open-settings" class="btn-icon" title="Settings">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <div id="app-container">
+
+    <!-- LEFT SIDEBAR -->
+    <aside id="sidebar">
+      
+      <!-- BRAND HEADER -->
+      <div class="sidebar-header">
+        <div class="brand-group">
+          <div class="brand-logo">
+            <img src="../assets/icon.png" alt="Google Flow" class="brand-logo-img">
+          </div>
+          <div class="brand-titles">
+            <h2>FLOW STUDIO</h2>
+            <span class="brand-subtitle">MULTI-ACCOUNT MANAGER</span>
+          </div>
+        </div>
+        <div class="engine-indicator" title="Anti-Detection Engine Active">
+          <span class="indicator-dot"></span>
+          <span>STEALTH</span>
+        </div>
+      </div>
+
+      <!-- POOL STATISTICS CARD -->
+      <div class="pool-stats-card">
+        <div class="stats-row">
+          <div class="stat-item">
+            <span class="stat-label">POOL CREDITS</span>
+            <span id="stat-total-credits" class="stat-value">0 / 0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">READY ACCOUNTS</span>
+            <span id="stat-ready-count" class="stat-value text-emerald">0 / 0</span>
+          </div>
+        </div>
+        
+        <div class="pool-progress-container">
+          <div class="pool-track">
+            <div id="stat-pool-progress" class="pool-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="stats-footer-row">
+          <label class="toggle-control" title="Auto switch to next account when credits drop below 15">
+            <input type="checkbox" id="toggle-auto-switch" checked>
+            <span class="toggle-slider"></span>
+            <span class="toggle-text">Auto-Switch (&lt;15 cr)</span>
+          </label>
+          <span id="stat-exhausted-tag" class="tag-depleted">0 empty</span>
+        </div>
+      </div>
+
+      <!-- ACCOUNT FILTER TABS -->
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">All (<span id="count-all">0</span>)</button>
+        <button class="filter-tab" data-filter="pro">Pro (<span id="count-pro">0</span>)</button>
+        <button class="filter-tab" data-filter="free">Free (<span id="count-free">0</span>)</button>
+        <button class="filter-tab" data-filter="ready">Ready (<span id="count-ready">0</span>)</button>
+      </div>
+
+      <!-- ACCOUNTS LIST (SCROLLABLE) -->
+      <div class="accounts-list-container">
+        <div class="list-actions-bar">
+          <span class="list-heading">GOOGLE ACCOUNTS</span>
+          <button id="btn-add-account-top" class="btn-link" title="Add Google Account">+ Add</button>
+        </div>
+        <div id="accounts-list" class="accounts-scroll-area">
+          <!-- Dynamically populated account items -->
+        </div>
+      </div>
+
+      <!-- SIDEBAR FOOTER -->
+      <div class="sidebar-footer">
+        <button id="btn-import-chrome" class="btn btn-chrome-import">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="4"></circle>
+            <line x1="21.17" y1="8" x2="12" y2="8"></line>
+            <line x1="3.95" y1="6.06" x2="8.54" y2="14"></line>
+            <line x1="10.88" y1="21.94" x2="15.46" y2="14"></line>
+          </svg>
+          <div class="chrome-import-text">
+            <span>Import from Chrome</span>
+            <span class="chrome-subtext">Detected 28 profiles</span>
+          </div>
+        </button>
+
+        <div class="footer-meta-row">
+          <span class="daily-reset-text">Daily Reset in: <strong id="reset-timer">18h 24m</strong></span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- FLOW WORKSPACE AREA -->
+    <!-- The Electron BrowserView renders on top of this container area -->
+    <main id="flow-workspace">
+      <div id="flow-placeholder" class="flow-empty-state">
+        <div class="empty-state-content">
+          <div class="empty-icon-ring">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </div>
+          <h2>Welcome to Flow Studio Manager</h2>
+          <p>Switch between your Google Flow accounts with zero Chrome profile hunting. All sessions stay logged in.</p>
+          <div class="empty-state-actions">
+            <button id="btn-empty-import" class="btn btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+              </svg>
+              <span>Import Existing Chrome Profiles</span>
+            </button>
+            <button id="btn-empty-add" class="btn btn-secondary">+ Add Account Manually</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- MODAL: ADD / EDIT ACCOUNT -->
+  <div id="modal-account" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-account-title">Add Google Account</h3>
+        <button id="btn-close-account-modal" class="btn-close">&times;</button>
+      </div>
+      <form id="form-account">
+        <input type="hidden" id="input-account-id">
+        <div class="form-group">
+          <label for="input-account-name">Account Name / Label</label>
+          <input type="text" id="input-account-name" placeholder="e.g. MobaZane, Main Pro, Flow 1" required>
+        </div>
+        <div class="form-group">
+          <label for="input-account-email">Google Email Address</label>
+          <input type="email" id="input-account-email" placeholder="e.g. yourname@gmail.com" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="select-account-type">Plan Type</label>
+            <select id="select-account-type">
+              <option value="pro">Pro / Paid Account</option>
+              <option value="free">Free Account</option>
+            </select>
+          </div>
+          <div class="form-group flex-1">
+            <label for="input-account-credits">Initial Credits</label>
+            <input type="number" id="input-account-credits" value="50" min="0" max="100">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="btn-cancel-account" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CHROME PROFILES IMPORT -->
+  <div id="modal-chrome-import" class="modal-backdrop hidden">
+    <div class="modal-card modal-wide">
+      <div class="modal-header">
+        <div class="header-title-group">
+          <h3>Import Chrome Profiles</h3>
+          <span class="sub-header-text">Discovered Google accounts from your Google Chrome browser</span>
+        </div>
+        <button id="btn-close-chrome-modal" class="btn-close">&times;</button>
+      </div>
+      <div class="chrome-profiles-controls">
+        <label class="select-all-label">
+          <input type="checkbox" id="chk-select-all-profiles" checked>
+          <span>Select All Available</span>
+        </label>
+        <span id="chrome-detected-count" class="detected-badge">Loading...</span>
+      </div>
+      <div id="chrome-profiles-list" class="chrome-list-scroll">
+        <!-- Dynamically populated checkboxes -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-cancel-chrome" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="btn-confirm-import" class="btn btn-primary">Import Selected Accounts</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SETTINGS -->
+  <div id="modal-settings" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Studio Settings</h3>
+        <button id="btn-close-settings-modal" class="btn-close">&times;</button>
+      </div>
+      <div class="settings-content">
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Auto-Switch Account</div>
+            <div class="setting-desc">Switch to the next account automatically when credits fall below clip threshold</div>
+          </div>
+          <input type="checkbox" id="setting-auto-switch" checked>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Minimum Credits for Switch</div>
+            <div class="setting-desc">Cost of a 10s video clip is 15 credits. Threshold to trigger rotation.</div>
+          </div>
+          <input type="number" id="setting-min-credits" value="15" min="1" max="50" style="width: 70px;">
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Prioritize Pro Accounts</div>
+            <div class="setting-desc">Rotate through Pro / Paid accounts before tapping Free accounts</div>
+          </div>
+          <input type="checkbox" id="setting-prioritize-pro" checked>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Audio Notifications</div>
+            <div class="setting-desc">Play subtle audio alert on credit updates or auto-switches</div>
+          </div>
+          <input type="checkbox" id="setting-audio-alerts" checked>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-save-settings" class="btn btn-primary">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING TOAST CONTAINER -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

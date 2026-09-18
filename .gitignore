@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build and distribution directories
+dist/
+build/
+PostPilot/build/
+PostPilot/dist/
+
+# Python cache and environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+
+# Logs & temp debug files
+*.log
+app_log.txt
+app_err.txt
+
+# Scratch browser test profile data directories
+PostPilot/scratch/test_*_profile*/
+PostPilot/scratch/test_profile/
+
+# Backup files
+*.bak
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
