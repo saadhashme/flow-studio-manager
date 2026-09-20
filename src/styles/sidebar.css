@@ -481,17 +481,57 @@
 }
 
 .footer-meta-row {
-  margin-top: 10px;
-  text-align: center;
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.daily-reset-text {
+.creator-badge-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 14px;
   font-size: 11px;
-  color: var(--text-muted);
+  font-weight: 500;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  user-select: none;
 }
 
-.daily-reset-text strong {
-  color: var(--text-secondary);
+.creator-badge-link:hover {
+  color: #ffffff;
+  background: rgba(37, 211, 102, 0.12);
+  border-color: rgba(37, 211, 102, 0.35);
+  box-shadow: 0 0 12px rgba(37, 211, 102, 0.2);
+  transform: translateY(-1px);
+}
+
+.creator-name {
+  font-weight: 600;
+  color: #f1f5f9;
+  transition: color 0.2s ease;
+}
+
+.creator-badge-link:hover .creator-name {
+  color: #25d366;
+}
+
+.creator-wa-icon {
+  width: 13px;
+  height: 13px;
+  fill: #25d366;
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.creator-badge-link:hover .creator-wa-icon {
+  transform: scale(1.18);
 }
 
 /* CHROME PROFILES MODAL LIST */

@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('flowAPI', {
   openLoginModal: (accountId) => ipcRenderer.invoke('open-login-modal', accountId),
   refreshCurrentCredits: () => ipcRenderer.invoke('refresh-credits'),
   setFlowViewVisible: (visible) => ipcRenderer.invoke('set-flow-view-visible', visible),
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
 
   // Settings & Storage
   getSettings: () => ipcRenderer.invoke('get-settings'),

@@ -88,6 +88,7 @@ const el = {
   btnAddAccountTop: document.getElementById('btn-add-account-top'),
   btnEmptyAdd: document.getElementById('btn-empty-add'),
   resetTimer: document.getElementById('reset-timer'),
+  btnAuthorLink: document.getElementById('btn-author-link'),
 
   modalAccount: document.getElementById('modal-account'),
   modalAccountTitle: document.getElementById('modal-account-title'),
@@ -662,9 +663,11 @@ function startResetCountdown() {
   function updateTimer() {
     const { hours, mins, secondsUntilMidnight, localResetTime } = getTimeUntilPacificMidnight();
     
-    el.resetTimer.textContent = `${hours}h ${mins}m (${localResetTime})`;
-    if (el.resetTimer.parentElement) {
-      el.resetTimer.parentElement.title = `Google Flow daily quota resets at Midnight Pacific Time (Google HQ), which is ${localResetTime} in your local time.`;
+    if (el.resetTimer) {
+      el.resetTimer.textContent = `${hours}h ${mins}m (${localResetTime})`;
+      if (el.resetTimer.parentElement) {
+        el.resetTimer.parentElement.title = `Google Flow daily quota resets at Midnight Pacific Time (Google HQ), which is ${localResetTime} in your local time.`;
+      }
     }
 
     // Auto-refresh credits on local app when daily reset boundary is crossed
@@ -860,6 +863,19 @@ function bindEvents() {
       closeAllModals();
     }
   });
+
+  // Author WhatsApp Contact Link
+  if (el.btnAuthorLink) {
+    el.btnAuthorLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const url = el.btnAuthorLink.getAttribute('href') || 'https://wa.me/+923025080076';
+      if (window.flowAPI && typeof window.flowAPI.openExternal === 'function') {
+        window.flowAPI.openExternal(url);
+      } else {
+        window.open(url, '_blank');
+      }
+    });
+  }
 }
 
 function escapeHtml(str) {

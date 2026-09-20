@@ -1,5 +1,5 @@
 // main.js - Flow Multi-Account Studio Manager
-const { app, BrowserWindow, BrowserView, ipcMain, session, nativeImage } = require('electron');
+const { app, BrowserWindow, BrowserView, ipcMain, session, nativeImage, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -309,6 +309,13 @@ function createMainWindow() {
     mainWindow.setIcon(appIcon);
   }
 
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://') || url.startsWith('http://')) {
+      shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
+
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
 
   mainWindow.on('resize', () => {
@@ -554,3 +561,11 @@ ipcMain.handle('save-settings', (event, settings) => {
   saveSettingsToDisk(settings);
   return true;
 });
+
+ipcMain.handle('open-external', (event, url) => {
+  if (url && (url.startsWith('https://') || url.startsWith('http://'))) {
+    shell.openExternal(url);
+  }
+  return true;
+});
+
