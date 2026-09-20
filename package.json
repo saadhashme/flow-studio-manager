@@ -34,16 +34,13 @@
       ]
     },
     "mac": {
+      "identity": null,
       "icon": "assets/icon.png",
       "category": "public.app-category.utilities",
       "target": [
         {
           "target": "dmg",
-          "arch": ["universal", "x64", "arm64"]
-        },
-        {
-          "target": "zip",
-          "arch": ["universal", "x64", "arm64"]
+          "arch": ["arm64", "x64"]
         }
       ]
     },

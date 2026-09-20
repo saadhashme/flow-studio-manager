@@ -85,6 +85,7 @@ const el = {
   
   btnImportChrome: document.getElementById('btn-import-chrome'),
   btnEmptyImport: document.getElementById('btn-empty-import'),
+  chromeSubtext: document.getElementById('chrome-subtext'),
   btnAddAccountTop: document.getElementById('btn-add-account-top'),
   btnEmptyAdd: document.getElementById('btn-empty-add'),
   resetTimer: document.getElementById('reset-timer'),
@@ -125,6 +126,21 @@ async function init() {
   await loadSettings();
   await loadAccounts();
   startResetCountdown();
+
+  // Dynamic Chrome profile detection for sidebar
+  if (window.flowAPI && typeof window.flowAPI.importChromeProfiles === 'function') {
+    window.flowAPI.importChromeProfiles().then(res => {
+      if (el.chromeSubtext) {
+        if (res && res.success && Array.isArray(res.profiles) && res.profiles.length > 0) {
+          el.chromeSubtext.textContent = `Detected ${res.profiles.length} profiles`;
+        } else {
+          el.chromeSubtext.textContent = 'Import profiles';
+        }
+      }
+    }).catch(() => {
+      if (el.chromeSubtext) el.chromeSubtext.textContent = 'Import profiles';
+    });
+  }
 
   if (window.flowAPI) {
     // Single credit update or full account update
@@ -554,19 +570,28 @@ async function openChromeImportModal() {
   if (window.flowAPI) window.flowAPI.setFlowViewVisible(false);
   el.modalChromeImport.classList.remove('hidden');
   el.chromeDetectedCount.textContent = 'Scanning Chrome profiles...';
-  el.chromeProfilesList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">Reading Chrome profiles...</div>';
+  el.chromeProfilesList.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-muted);">Reading Chrome profiles...</div>';
 
   if (!window.flowAPI) return;
-  const res = await window.flowAPI.importChromeProfiles();
-  if (!res.success) {
-    el.chromeProfilesList.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--accent-rose);">${escapeHtml(res.message || 'Failed')}</div>`;
-    el.chromeDetectedCount.textContent = '0 found';
-    return;
-  }
+  try {
+    const res = await window.flowAPI.importChromeProfiles();
+    if (!res || !res.success) {
+      el.chromeProfilesList.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--accent-rose); line-height: 1.6;">${escapeHtml((res && res.message) || 'Chrome profile not found on this system.')}</div>`;
+      el.chromeDetectedCount.textContent = '0 found';
+      if (el.chromeSubtext) el.chromeSubtext.textContent = '0 profiles found';
+      return;
+    }
 
-  state.discoveredProfiles = res.profiles || [];
-  el.chromeDetectedCount.textContent = `${state.discoveredProfiles.length} profiles discovered`;
-  renderChromeProfilesList();
+    state.discoveredProfiles = res.profiles || [];
+    el.chromeDetectedCount.textContent = `${state.discoveredProfiles.length} profiles discovered`;
+    if (el.chromeSubtext) {
+      el.chromeSubtext.textContent = `Detected ${state.discoveredProfiles.length} profiles`;
+    }
+    renderChromeProfilesList();
+  } catch (err) {
+    el.chromeProfilesList.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--accent-rose); line-height: 1.6;">${escapeHtml(err.message || 'Error scanning profiles')}</div>`;
+    el.chromeDetectedCount.textContent = '0 found';
+  }
 }
 
 function renderChromeProfilesList() {

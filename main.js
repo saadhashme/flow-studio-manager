@@ -435,16 +435,53 @@ ipcMain.handle('update-account', (event, accountId, updates) => {
   return null;
 });
 
-ipcMain.handle('import-chrome-profiles', () => {
-  const localStatePath = path.join(process.env.LOCALAPPDATA, 'Google', 'Chrome', 'User Data', 'Local State');
-  if (!fs.existsSync(localStatePath)) {
-    return { success: false, message: 'Chrome Local State not found on this system.', profiles: [] };
+function getChromeLocalStatePaths() {
+  const home = app.getPath('home');
+  const candidates = [];
+  if (process.platform === 'darwin') {
+    candidates.push(path.join(home, 'Library', 'Application Support', 'Google', 'Chrome', 'Local State'));
+    candidates.push(path.join(home, 'Library', 'Application Support', 'Google', 'Chrome Canary', 'Local State'));
+    candidates.push(path.join(home, 'Library', 'Application Support', 'Chromium', 'Local State'));
+    candidates.push(path.join(home, 'Library', 'Application Support', 'BraveSoftware', 'Brave-Browser', 'Local State'));
+    candidates.push(path.join(home, 'Library', 'Application Support', 'Microsoft Edge', 'Local State'));
+  } else if (process.platform === 'win32') {
+    const localAppData = process.env.LOCALAPPDATA || path.join(home, 'AppData', 'Local');
+    candidates.push(path.join(localAppData, 'Google', 'Chrome', 'User Data', 'Local State'));
+    candidates.push(path.join(localAppData, 'Google', 'Chrome SxS', 'User Data', 'Local State'));
+    candidates.push(path.join(localAppData, 'Chromium', 'User Data', 'Local State'));
+    candidates.push(path.join(localAppData, 'BraveSoftware', 'Brave-Browser', 'User Data', 'Local State'));
+    candidates.push(path.join(localAppData, 'Microsoft', 'Edge', 'User Data', 'Local State'));
+  } else {
+    candidates.push(path.join(home, '.config', 'google-chrome', 'Local State'));
+    candidates.push(path.join(home, '.config', 'chromium', 'Local State'));
+    candidates.push(path.join(home, '.config', 'BraveSoftware', 'Brave-Browser', 'Local State'));
+    candidates.push(path.join(home, '.config', 'microsoft-edge', 'Local State'));
   }
+  return candidates;
+}
 
+ipcMain.handle('import-chrome-profiles', () => {
   try {
+    const candidates = getChromeLocalStatePaths();
+    let localStatePath = null;
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        localStatePath = p;
+        break;
+      }
+    }
+
+    if (!localStatePath) {
+      return { 
+        success: false, 
+        message: 'Google Chrome installation not found. You can add accounts manually using "+ Add Account".', 
+        profiles: [] 
+      };
+    }
+
     const raw = fs.readFileSync(localStatePath, 'utf8');
     const data = JSON.parse(raw);
-    const infoCache = data.profile ? data.profile.info_cache : {};
+    const infoCache = (data.profile && data.profile.info_cache) ? data.profile.info_cache : {};
     
     const existingAccounts = loadAccountsFromDisk();
     const existingEmails = new Set(existingAccounts.map(a => (a.email || '').toLowerCase().trim()));
@@ -453,19 +490,18 @@ ipcMain.handle('import-chrome-profiles', () => {
     for (const [key, val] of Object.entries(infoCache)) {
       const email = (val.user_name || '').trim();
       const displayName = val.name || val.gaia_name || key;
-      if (email || val.gaia_name) {
-        discovered.push({
-          chromeKey: key,
-          name: displayName,
-          email: email,
-          isAlreadyAdded: email ? existingEmails.has(email.toLowerCase()) : false
-        });
-      }
+      discovered.push({
+        chromeKey: key,
+        name: displayName,
+        email: email,
+        isAlreadyAdded: email ? existingEmails.has(email.toLowerCase()) : false
+      });
     }
 
-    return { success: true, profiles: discovered };
+    return { success: true, profiles: discovered, localStatePath };
   } catch (err) {
-    return { success: false, message: err.message, profiles: [] };
+    console.error('Error importing chrome profiles:', err);
+    return { success: false, message: 'Failed to read Chrome profiles: ' + err.message, profiles: [] };
   }
 });
 
