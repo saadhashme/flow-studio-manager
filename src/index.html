@@ -89,6 +89,16 @@
         <span>Sign In</span>
       </button>
 
+      <button id="btn-cookies-active" class="btn btn-secondary btn-cookies-nav" title="Paste / Import Chrome Cookies for this account">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"></path>
+          <circle cx="8.5" cy="8.5" r="1" fill="currentColor"></circle>
+          <circle cx="16" cy="15.5" r="1" fill="currentColor"></circle>
+          <circle cx="12" cy="12" r="1" fill="currentColor"></circle>
+        </svg>
+        <span>Paste Cookies</span>
+      </button>
+
       <button id="btn-open-settings" class="btn-icon" title="Settings">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </button>
@@ -252,6 +262,7 @@
           </div>
         </div>
         <div class="modal-footer">
+          <button type="button" id="btn-account-modal-cookies" class="btn btn-secondary" style="margin-right: auto;" title="Paste Chrome session cookies for this account">🍪 Paste Cookies</button>
           <button type="button" id="btn-cancel-account" class="btn btn-secondary">Cancel</button>
           <button type="submit" class="btn btn-primary">Save Account</button>
         </div>
@@ -282,6 +293,71 @@
       <div class="modal-footer">
         <button type="button" id="btn-cancel-chrome" class="btn btn-secondary">Cancel</button>
         <button type="button" id="btn-confirm-import" class="btn btn-primary">Import Selected Accounts</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: COOKIE SESSION IMPORT -->
+  <div id="modal-cookies" class="modal-backdrop hidden">
+    <div class="modal-card modal-wide">
+      <div class="modal-header">
+        <div class="header-title-group">
+          <h3 id="modal-cookies-title">Paste Chrome Cookies</h3>
+          <span class="sub-header-text" id="modal-cookies-subtitle">Login instantly without password/2FA by pasting session cookies</span>
+        </div>
+        <button id="btn-close-cookies-modal" class="btn-close">&times;</button>
+      </div>
+
+      <div class="cookie-help-guide">
+        <div class="guide-step">
+          <span class="step-num">1</span>
+          <span>Google Chrome me is account ki profile khol kar <strong>flow.google.com</strong> par jaein.</span>
+        </div>
+        <div class="guide-step">
+          <span class="step-num">2</span>
+          <span><strong>Cookie-Editor</strong> extension se <strong>Export &gt; Export as JSON</strong> karein (ya header copy karein).</span>
+        </div>
+        <div class="guide-step">
+          <span class="step-num">3</span>
+          <span>Neechay box me paste karein aur <strong>Apply Cookies &amp; Login</strong> par click karein.</span>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 14px; margin-bottom: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <label for="input-cookie-data" style="margin: 0; font-weight: 600; color: var(--text-primary);">Cookie Data (JSON Array or Header String):</label>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" id="btn-paste-clipboard-cookie" class="btn-link text-xs">📋 Paste from Clipboard</button>
+            <button type="button" id="btn-clear-cookie" class="btn-link text-xs" style="color: var(--text-muted);">Clear</button>
+          </div>
+        </div>
+        <textarea id="input-cookie-data" class="cookie-textarea" rows="7" placeholder='Paste your copied cookies here... Example:
+[
+  { "name": "SID", "value": "g.a000...", "domain": ".google.com", "path": "/" },
+  { "name": "HSID", "value": "...", "domain": ".google.com", "path": "/" },
+  { "name": "__Secure-1PSID", "value": "...", "domain": ".google.com", "path": "/" }
+]
+
+Or Header String:
+SID=...; HSID=...; SSID=...;' spellcheck="false"></textarea>
+      </div>
+
+      <div id="cookie-status-bar" class="cookie-status-bar">
+        <span id="cookie-count-badge" class="cookie-badge-info">Ready to paste</span>
+        <span id="cookie-tip-text" class="cookie-tip">Format: JSON Array (Cookie-Editor) or Name=Value header</span>
+      </div>
+
+      <div class="modal-footer" style="margin-top: 16px;">
+        <button type="button" id="btn-cancel-cookies" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="btn-apply-cookies" class="btn btn-primary btn-cookies-action">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"></path>
+            <circle cx="8.5" cy="8.5" r="1" fill="currentColor"></circle>
+            <circle cx="16" cy="15.5" r="1" fill="currentColor"></circle>
+            <circle cx="12" cy="12" r="1" fill="currentColor"></circle>
+          </svg>
+          <span>Apply Cookies &amp; Login</span>
+        </button>
       </div>
     </div>
   </div>

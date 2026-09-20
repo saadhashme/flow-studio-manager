@@ -19,6 +19,10 @@ contextBridge.exposeInMainWorld('flowAPI', {
   setFlowViewVisible: (visible) => ipcRenderer.invoke('set-flow-view-visible', visible),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
 
+  // Cookie Session Management
+  importCookies: (accountId, cookieData) => ipcRenderer.invoke('import-cookies', { accountId, cookieData }),
+  getCookies: (accountId) => ipcRenderer.invoke('get-cookies', accountId),
+
   // Settings & Storage
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),

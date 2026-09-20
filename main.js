@@ -1,7 +1,24 @@
-// main.js - Flow Multi-Account Studio Manager
-const { app, BrowserWindow, BrowserView, ipcMain, session, nativeImage, shell } = require('electron');
+const { app, BrowserWindow, BrowserView, ipcMain, session, nativeImage, shell, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+
+// Global error handlers to prevent silent crashes
+process.on('uncaughtException', (error) => {
+  console.error('[CRITICAL] Uncaught Exception:', error);
+  try {
+    const logPath = path.join(app.getPath('userData'), 'crash.log');
+    fs.appendFileSync(logPath, `[${new Date().toISOString()}] Uncaught Exception: ${error.stack || error}\n`);
+    dialog.showErrorBox('Flow Studio Manager - Launch Error', `${error.message || error}\n\nLog saved to: ${logPath}`);
+  } catch (e) {}
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[CRITICAL] Unhandled Rejection:', reason);
+  try {
+    const logPath = path.join(app.getPath('userData'), 'crash.log');
+    fs.appendFileSync(logPath, `[${new Date().toISOString()}] Unhandled Rejection: ${reason.stack || reason}\n`);
+  } catch (e) {}
+});
 
 // 1. Anti-Bot / Anti-Detection Chrome Flags
 app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
@@ -604,4 +621,178 @@ ipcMain.handle('open-external', (event, url) => {
   }
   return true;
 });
+
+// 7. Cookie Management (Import / Paste Session Cookies)
+ipcMain.handle('import-cookies', async (event, { accountId, cookieData }) => {
+  if (!accountId || !cookieData) {
+    return { success: false, message: 'Missing account ID or cookie data.' };
+  }
+
+  const accounts = loadAccountsFromDisk();
+  const acc = accounts.find(a => a.id === accountId);
+  if (!acc) {
+    return { success: false, message: 'Account not found.' };
+  }
+
+  const partitionName = `persist:flow_account_${accountId}`;
+  setupSessionPartition(partitionName);
+  const ses = session.fromPartition(partitionName);
+
+  let cookiesToSet = [];
+
+  // Attempt 1: Parse JSON (Cookie-Editor, EditThisCookie, DevTools)
+  try {
+    const parsed = typeof cookieData === 'string' ? JSON.parse(cookieData.trim()) : cookieData;
+    if (Array.isArray(parsed)) {
+      cookiesToSet = parsed;
+    } else if (typeof parsed === 'object' && parsed !== null) {
+      if (Array.isArray(parsed.cookies)) {
+        cookiesToSet = parsed.cookies;
+      } else {
+        cookiesToSet = Object.entries(parsed).map(([name, value]) => ({
+          name,
+          value: String(value),
+          domain: '.google.com',
+          path: '/'
+        }));
+      }
+    }
+  } catch (e) {
+    // Not JSON, check plain text formats
+  }
+
+  // Attempt 2: Netscape or Header string formats
+  if (cookiesToSet.length === 0 && typeof cookieData === 'string') {
+    const raw = cookieData.trim();
+    const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+
+    // Netscape format (tab-separated)
+    const isNetscape = lines.some(l => l.split('\t').length >= 6);
+    if (isNetscape) {
+      for (const line of lines) {
+        const parts = line.split('\t');
+        if (parts.length >= 7) {
+          cookiesToSet.push({
+            domain: parts[0],
+            path: parts[2],
+            secure: parts[3].toLowerCase() === 'true',
+            expirationDate: parseInt(parts[4], 10) || undefined,
+            name: parts[5],
+            value: parts[6]
+          });
+        }
+      }
+    } else {
+      // Header string format: "name=val; name2=val2" or lines of "name=val"
+      const cleanHeader = raw.replace(/^Cookie:\s*/i, '');
+      const pairs = cleanHeader.split(/[;\r\n]+/).map(p => p.trim()).filter(Boolean);
+      for (const pair of pairs) {
+        const idx = pair.indexOf('=');
+        if (idx !== -1) {
+          const name = pair.slice(0, idx).trim();
+          const value = pair.slice(idx + 1).trim();
+          if (name) {
+            cookiesToSet.push({
+              name,
+              value,
+              domain: '.google.com',
+              path: '/'
+            });
+          }
+        }
+      }
+    }
+  }
+
+  if (cookiesToSet.length === 0) {
+    return { 
+      success: false, 
+      message: 'No valid cookies recognized. Please paste JSON array from Cookie-Editor or a Cookie header string.' 
+    };
+  }
+
+  let successCount = 0;
+  let errorCount = 0;
+
+  for (const c of cookiesToSet) {
+    if (!c.name || c.value === undefined || c.value === null) continue;
+
+    try {
+      let domain = (c.domain || '.google.com').trim();
+      let cleanDomain = domain.replace(/^\./, '');
+      if (!cleanDomain.includes('google.com') && !cleanDomain.includes('youtube.com')) {
+        cleanDomain = 'google.com';
+        domain = '.google.com';
+      }
+
+      const url = (c.secure !== false ? 'https://' : 'http://') + cleanDomain + (c.path || '/');
+
+      let sameSite = undefined;
+      if (c.sameSite) {
+        const ss = String(c.sameSite).toLowerCase().replace(/[-_]/g, '');
+        if (ss === 'lax') sameSite = 'lax';
+        else if (ss === 'strict') sameSite = 'strict';
+        else if (ss === 'norestriction' || ss === 'none') sameSite = 'no_restriction';
+        else sameSite = 'unspecified';
+      }
+
+      const cookieDetails = {
+        url: url,
+        name: String(c.name).trim(),
+        value: String(c.value),
+        path: c.path || '/',
+        secure: c.secure !== undefined ? Boolean(c.secure) : true,
+        httpOnly: c.httpOnly !== undefined ? Boolean(c.httpOnly) : false
+      };
+
+      if (domain) {
+        cookieDetails.domain = domain;
+      }
+      if (sameSite) {
+        cookieDetails.sameSite = sameSite;
+      }
+      if (c.expirationDate && typeof c.expirationDate === 'number') {
+        cookieDetails.expirationDate = Math.floor(c.expirationDate);
+      }
+
+      await ses.cookies.set(cookieDetails);
+      successCount++;
+    } catch (err) {
+      console.warn(`[CookieImport] Error setting cookie ${c.name}:`, err.message);
+      errorCount++;
+    }
+  }
+
+  // Force persist cookies to disk SQLite store
+  try {
+    await ses.cookies.flushStore();
+  } catch (e) {}
+
+  console.log(`[CookieImport] Imported ${successCount} cookies for account ${acc.name} (${accountId})`);
+
+  // Reload the active flow view if this account is currently active
+  if (viewCache.has(accountId)) {
+    const view = viewCache.get(accountId);
+    view.webContents.loadURL('https://flow.google.com/');
+  }
+
+  return {
+    success: successCount > 0,
+    count: successCount,
+    message: `Successfully imported ${successCount} cookies for ${acc.name}! Session loaded and saved.`
+  };
+});
+
+ipcMain.handle('get-cookies', async (event, accountId) => {
+  if (!accountId) return [];
+  const partitionName = `persist:flow_account_${accountId}`;
+  const ses = session.fromPartition(partitionName);
+  try {
+    const cookies = await ses.cookies.get({ domain: 'google.com' });
+    return cookies.map(c => ({ name: c.name, domain: c.domain, path: c.path, secure: c.secure }));
+  } catch (e) {
+    return [];
+  }
+});
+
 

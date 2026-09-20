@@ -65,6 +65,7 @@ const el = {
   btnNavReload: document.getElementById('btn-nav-reload'),
   btnNavHome: document.getElementById('btn-nav-home'),
   btnLoginActive: document.getElementById('btn-login-active'),
+  btnCookiesActive: document.getElementById('btn-cookies-active'),
   btnOpenSettings: document.getElementById('btn-open-settings'),
 
   statTotalCredits: document.getElementById('stat-total-credits'),
@@ -117,6 +118,19 @@ const el = {
   settingAudioAlerts: document.getElementById('setting-audio-alerts'),
   btnCloseSettingsModal: document.getElementById('btn-close-settings-modal'),
   btnSaveSettings: document.getElementById('btn-save-settings'),
+
+  modalCookies: document.getElementById('modal-cookies'),
+  modalCookiesTitle: document.getElementById('modal-cookies-title'),
+  modalCookiesSubtitle: document.getElementById('modal-cookies-subtitle'),
+  inputCookieData: document.getElementById('input-cookie-data'),
+  cookieCountBadge: document.getElementById('cookie-count-badge'),
+  cookieTipText: document.getElementById('cookie-tip-text'),
+  btnPasteClipboardCookie: document.getElementById('btn-paste-clipboard-cookie'),
+  btnClearCookie: document.getElementById('btn-clear-cookie'),
+  btnCloseCookiesModal: document.getElementById('btn-close-cookies-modal'),
+  btnCancelCookies: document.getElementById('btn-cancel-cookies'),
+  btnApplyCookies: document.getElementById('btn-apply-cookies'),
+  btnAccountModalCookies: document.getElementById('btn-account-modal-cookies'),
 
   toastContainer: document.getElementById('toast-container')
 };
@@ -505,8 +519,75 @@ function closeAllModals() {
   el.modalAccount.classList.add('hidden');
   el.modalChromeImport.classList.add('hidden');
   el.modalSettings.classList.add('hidden');
+  if (el.modalCookies) el.modalCookies.classList.add('hidden');
   if (window.flowAPI) {
     window.flowAPI.setFlowViewVisible(true);
+  }
+}
+
+let cookieTargetAccountId = null;
+
+function openCookieModal(accountId) {
+  cookieTargetAccountId = accountId || state.activeAccountId;
+  if (!cookieTargetAccountId) {
+    showToast('Please select or add an account first.', 'warning');
+    return;
+  }
+
+  const acc = state.accounts.find(a => a.id === cookieTargetAccountId);
+  if (window.flowAPI) window.flowAPI.setFlowViewVisible(false);
+
+  if (el.modalCookiesTitle) {
+    el.modalCookiesTitle.textContent = `Paste Cookies: ${acc ? acc.name : 'Account'}`;
+  }
+  if (el.modalCookiesSubtitle) {
+    el.modalCookiesSubtitle.textContent = `Inject Chrome session cookies directly into "${acc ? (acc.email || acc.name) : 'this account'}"`;
+  }
+
+  el.inputCookieData.value = '';
+  updateCookiePreview();
+  el.modalCookies.classList.remove('hidden');
+  setTimeout(() => el.inputCookieData.focus(), 50);
+}
+
+function closeCookieModal() {
+  closeAllModals();
+}
+
+function updateCookiePreview() {
+  if (!el.inputCookieData) return;
+  const raw = el.inputCookieData.value.trim();
+  if (!raw) {
+    el.cookieCountBadge.className = 'cookie-badge-info';
+    el.cookieCountBadge.textContent = 'Ready to paste';
+    el.cookieTipText.textContent = 'Paste JSON from Cookie-Editor or Header string';
+    return;
+  }
+
+  // Check JSON format
+  try {
+    const parsed = JSON.parse(raw);
+    const arr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.cookies) ? parsed.cookies : Object.keys(parsed));
+    const googleTokens = arr.filter(c => {
+      const name = typeof c === 'string' ? c : (c.name || '');
+      return ['SID', 'HSID', 'SSID', 'APISID', 'SAPISID', '__Secure-1PSID', '__Secure-3PSID', 'NID'].includes(name);
+    });
+    el.cookieCountBadge.className = 'cookie-badge-success';
+    el.cookieCountBadge.textContent = `✓ ${arr.length} cookies detected (${googleTokens.length} Google auth tokens)`;
+    el.cookieTipText.textContent = 'Valid JSON format ready to apply!';
+    return;
+  } catch (e) {}
+
+  // Check header string
+  const pairs = raw.replace(/^Cookie:\s*/i, '').split(/[;\r\n]+/).map(s => s.trim()).filter(Boolean);
+  if (pairs.length > 0 && pairs.some(p => p.includes('='))) {
+    el.cookieCountBadge.className = 'cookie-badge-success';
+    el.cookieCountBadge.textContent = `✓ ${pairs.length} cookie pairs detected`;
+    el.cookieTipText.textContent = 'Header string format ready to apply!';
+  } else {
+    el.cookieCountBadge.className = 'cookie-badge-warning';
+    el.cookieCountBadge.textContent = 'Format unrecognized';
+    el.cookieTipText.textContent = 'Please paste a JSON array or name=value pairs';
   }
 }
 
@@ -788,6 +869,106 @@ function bindEvents() {
       showToast('Please select an account first.', 'warning');
     }
   });
+
+  if (el.btnCookiesActive) {
+    el.btnCookiesActive.addEventListener('click', () => {
+      if (state.activeAccountId) {
+        openCookieModal(state.activeAccountId);
+      } else {
+        showToast('Please select an account first.', 'warning');
+      }
+    });
+  }
+
+  if (el.btnAccountModalCookies) {
+    el.btnAccountModalCookies.addEventListener('click', () => {
+      const id = el.inputAccountId.value || state.activeAccountId;
+      if (id) {
+        closeAllModals();
+        openCookieModal(id);
+      } else {
+        showToast('Please save the account first before pasting cookies.', 'info');
+      }
+    });
+  }
+
+  if (el.btnCloseCookiesModal) el.btnCloseCookiesModal.addEventListener('click', closeCookieModal);
+  if (el.btnCancelCookies) el.btnCancelCookies.addEventListener('click', closeCookieModal);
+
+  if (el.inputCookieData) {
+    el.inputCookieData.addEventListener('input', updateCookiePreview);
+  }
+
+  if (el.btnClearCookie) {
+    el.btnClearCookie.addEventListener('click', () => {
+      el.inputCookieData.value = '';
+      updateCookiePreview();
+      el.inputCookieData.focus();
+    });
+  }
+
+  if (el.btnPasteClipboardCookie) {
+    el.btnPasteClipboardCookie.addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          el.inputCookieData.value = text;
+          updateCookiePreview();
+          showToast('Pasted cookies from clipboard!', 'info');
+        } else {
+          showToast('Clipboard is empty. Copy cookies first.', 'warning');
+        }
+      } catch (err) {
+        showToast('Clipboard permission denied. Please press Ctrl+V directly.', 'warning');
+      }
+    });
+  }
+
+  if (el.btnApplyCookies) {
+    el.btnApplyCookies.addEventListener('click', async () => {
+      const cookieData = el.inputCookieData.value.trim();
+      if (!cookieData) {
+        showToast('Please paste cookie data first.', 'warning');
+        return;
+      }
+      if (!cookieTargetAccountId) {
+        showToast('No target account selected.', 'warning');
+        return;
+      }
+
+      const btn = el.btnApplyCookies;
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span>Injecting cookies...</span>';
+
+      try {
+        const res = await window.flowAPI.importCookies(cookieTargetAccountId, cookieData);
+        if (res && res.success) {
+          showToast(`🍪 ${res.message}`, 'success');
+          playChime('credit');
+
+          // If this account wasn't active, switch to it now
+          if (state.activeAccountId !== cookieTargetAccountId) {
+            switchAccount(cookieTargetAccountId);
+          }
+
+          closeCookieModal();
+
+          // After 3.5s, refresh credits from newly loaded session
+          setTimeout(() => {
+            if (window.flowAPI) window.flowAPI.refreshCurrentCredits();
+          }, 3500);
+        } else {
+          showToast((res && res.message) || 'Failed to apply cookies. Please check format.', 'warning');
+        }
+      } catch (err) {
+        showToast('Error applying cookies: ' + err.message, 'warning');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    });
+  }
 
   el.filterTabs.forEach(tab => {
     tab.addEventListener('click', () => {

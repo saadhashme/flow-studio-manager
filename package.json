@@ -24,12 +24,12 @@
       "icon": "assets/icon.ico",
       "target": [
         {
-          "target": "portable",
-          "arch": ["x64"]
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
         },
         {
-          "target": "nsis",
-          "arch": ["x64"]
+          "target": "portable",
+          "arch": ["x64", "ia32"]
         }
       ]
     },
@@ -40,7 +40,11 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["arm64", "x64"]
+          "arch": ["arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["arm64"]
         }
       ]
     },
@@ -59,9 +63,14 @@
       ]
     },
     "nsis": {
-      "oneClick": true,
+      "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": false
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Flow Studio Manager",
+      "runAfterFinish": true
     },
     "files": [
       "main.js",
